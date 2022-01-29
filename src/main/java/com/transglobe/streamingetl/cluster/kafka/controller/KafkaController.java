@@ -26,7 +26,7 @@ import com.transglobe.streamingetl.cluster.kafka.service.KafkaService;
 
 
 @RestController
-@RequestMapping("/kafka")
+@RequestMapping("/")
 public class KafkaController {
 	static final Logger logger = LoggerFactory.getLogger(KafkaController.class);
 
