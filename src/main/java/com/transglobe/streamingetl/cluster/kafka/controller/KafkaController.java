@@ -1,5 +1,6 @@
 package com.transglobe.streamingetl.cluster.kafka.controller;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -250,84 +251,92 @@ public class KafkaController {
 //		
 //		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
 //	}
-//	@GetMapping(path="/listTopics", produces=MediaType.APPLICATION_JSON_VALUE)
-//	@ResponseBody
-//	public ResponseEntity<Object> listTopics() {
-//		logger.info(">>>>controller listTopics is called");
-//		
-//		ObjectNode objectNode = mapper.createObjectNode();
-//	
-//		try {
-//			Set<String> topics = kafkaService.listTopics();
-//			List<String> topicList = new ArrayList<>();
-//			for (String t : topics) {
-//				topicList.add(t);
-//			}
-//			String jsonStr = HttpUtils.writeListToJsonString(topicList);
-//			
-//			objectNode.put("returnCode", "0000");
-//			objectNode.put("topics", jsonStr);
-//		} catch (Exception e) {
-//			String errMsg = ExceptionUtils.getMessage(e);
-//			String stackTrace = ExceptionUtils.getStackTrace(e);
-//			objectNode.put("returnCode", "-9999");
-//			objectNode.put("errMsg", errMsg);
-//			objectNode.put("returnCode", stackTrace);
-//			logger.error(">>> errMsg={}, stacktrace={}",errMsg,stackTrace);
-//		}
-//		
-//		logger.info(">>>>controller listTopics finished ");
-//		
-//		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-//	}
-//	@PostMapping(path="/createTopic/{topic}", produces=MediaType.APPLICATION_JSON_VALUE)
-//	@ResponseBody
-//	public ResponseEntity<Object> createTopic(@PathVariable("topic") String topic) {
-//		logger.info(">>>>controller createTopic is called");
-//		
-//		ObjectNode objectNode = mapper.createObjectNode();
-//	
-//		try {
-//			kafkaService.createTopic(topic);
-//			
-//			objectNode.put("returnCode", "0000");
-//		} catch (Exception e) {
-//			String errMsg = ExceptionUtils.getMessage(e);
-//			String stackTrace = ExceptionUtils.getStackTrace(e);
-//			objectNode.put("returnCode", "-9999");
-//			objectNode.put("errMsg", errMsg);
-//			objectNode.put("returnCode", stackTrace);
-//			logger.error(">>> errMsg={}, stacktrace={}",errMsg,stackTrace);
-//		}
-//		
-//		logger.info(">>>>controller createTopic finished ");
-//		
-//		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-//	}
-//	@PostMapping(path="/deleteTopic/{topic}", produces=MediaType.APPLICATION_JSON_VALUE)
-//	@ResponseBody
-//	public ResponseEntity<Object> deleteTopic(@PathVariable("topic") String topic) {
-//		logger.info(">>>>controller deleteTopic is called");
-//		
-//		ObjectNode objectNode = mapper.createObjectNode();
-//	
-//		try {
-//			kafkaService.deleteTopic(topic);
-//			
-//			objectNode.put("returnCode", "0000");
-//		} catch (Exception e) {
-//			String errMsg = ExceptionUtils.getMessage(e);
-//			String stackTrace = ExceptionUtils.getStackTrace(e);
-//			objectNode.put("returnCode", "-9999");
-//			objectNode.put("errMsg", errMsg);
-//			objectNode.put("returnCode", stackTrace);
-//			logger.error(">>> errMsg={}, stacktrace={}",errMsg,stackTrace);
-//		}
-//		
-//		logger.info(">>>>controller deleteTopic finished ");
-//		
-//		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-//	}
+	@GetMapping(path="/listTopics", produces=MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<Object> listTopics() {
+		logger.info(">>>>controller listTopics is called");
+		
+		ObjectNode objectNode = mapper.createObjectNode();
+	
+		try {
+			Set<String> topics = kafkaService.listTopics();
+			List<String> topicList = new ArrayList<>();
+			for (String t : topics) {
+				topicList.add(t);
+			}
+			
+			final ByteArrayOutputStream out = new ByteArrayOutputStream();
+		    final ObjectMapper mapper = new ObjectMapper();
+
+		    mapper.writeValue(out, topicList);
+
+		    final byte[] data = out.toByteArray();
+		    
+		    String jsonStr =  new String(data);
+
+			objectNode.put("returnCode", "0000");
+			objectNode.put("topics", jsonStr);
+		} catch (Exception e) {
+			String errMsg = ExceptionUtils.getMessage(e);
+			String stackTrace = ExceptionUtils.getStackTrace(e);
+			objectNode.put("returnCode", "-9999");
+			objectNode.put("errMsg", errMsg);
+			objectNode.put("returnCode", stackTrace);
+			logger.error(">>> errMsg={}, stacktrace={}",errMsg,stackTrace);
+		}
+		
+		logger.info(">>>>controller listTopics finished ");
+		
+		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
+	}
+	@PostMapping(path="/createTopic/{topic}/rf/{replicationFactor}/np/{numPartitions}", produces=MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<Object> createTopic(@PathVariable("topic") String topic, @PathVariable("replicationFactor") Integer replicationFactor, @PathVariable("numPartitions") Integer numPartitions) {
+		logger.info(">>>>controller createTopic is called");
+		
+		ObjectNode objectNode = mapper.createObjectNode();
+	
+		try {
+			kafkaService.createTopic(topic, replicationFactor, numPartitions);
+			
+			objectNode.put("returnCode", "0000");
+		} catch (Exception e) {
+			String errMsg = ExceptionUtils.getMessage(e);
+			String stackTrace = ExceptionUtils.getStackTrace(e);
+			objectNode.put("returnCode", "-9999");
+			objectNode.put("errMsg", errMsg);
+			objectNode.put("returnCode", stackTrace);
+			logger.error(">>> errMsg={}, stacktrace={}",errMsg,stackTrace);
+		}
+		
+		logger.info(">>>>controller createTopic finished ");
+		
+		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
+	}
+	@PostMapping(path="/deleteTopic/{topic}", produces=MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<Object> deleteTopic(@PathVariable("topic") String topic) {
+		logger.info(">>>>controller deleteTopic is called");
+		
+		ObjectNode objectNode = mapper.createObjectNode();
+	
+		try {
+			kafkaService.deleteTopic(topic);
+			
+			objectNode.put("returnCode", "0000");
+		} catch (Exception e) {
+			String errMsg = ExceptionUtils.getMessage(e);
+			String stackTrace = ExceptionUtils.getStackTrace(e);
+			objectNode.put("returnCode", "-9999");
+			objectNode.put("errMsg", errMsg);
+			objectNode.put("returnCode", stackTrace);
+			logger.error(">>> errMsg={}, stacktrace={}",errMsg,stackTrace);
+		}
+		
+		logger.info(">>>>controller deleteTopic finished ");
+		
+		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
+	}
 //	@PostMapping(path="/deleteAllTopics", produces=MediaType.APPLICATION_JSON_VALUE)
 //	@ResponseBody
 //	public ResponseEntity<Object> deleteAllTopics() {

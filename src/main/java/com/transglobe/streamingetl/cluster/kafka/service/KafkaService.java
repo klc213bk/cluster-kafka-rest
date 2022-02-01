@@ -4,6 +4,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,64 +31,67 @@ public class KafkaService {
 
 	@Value("${zookeeper.start.properties}")
 	private String zookeeperStartProperties;
-	
+
 	@Value("${zookeeper.server.port}")
 	private String zookeeperServerPortStr;
-	
+
 	@Value("${zookeeper.stop.script}")
 	private String zookeeperStopScript;
-	
+
 	@Value("${kafka.start.script}")
 	private String kafkaStartScript;
 
 	@Value("${kafka.start.properties}")
 	private String kafkaStartProperties;
-	
+
 	@Value("${kafka.start.properties.one}")
 	private String kafkaStartPropertiesOne;
-	
+
 	@Value("${kafka.start.properties.two}")
 	private String kafkaStartPropertiesTwo;
 
 	//@Value("${kafka.stop.script}")
 	//private String kafkaStopScript;
 
-//	@Value("${kafka.bootstrap.server}")
-//	private String kafkaBootstrapServer;
-	
+	//	@Value("${kafka.bootstrap.server}")
+	//	private String kafkaBootstrapServer;
+
 	@Value("${kafka.server.port}")
 	private String kafkaServerPortStr;
-	
+
 	@Value("${kafka.server.port.one}")
 	private String kafkaServerPortOneStr;
-	
+
 	@Value("${kafka.server.port.two}")
 	private String kafkaServerPortTwoStr;
-	
+
+	@Value("${kafka.bootstrap.server}")
+	private String kafkaBootstrapServer;
+
 	private Process zookeeperStartProcess;
-//	private ExecutorService zookeeperStartExecutor;
-//	private AtomicBoolean zookeeperStartFinished = new AtomicBoolean(false);
-//	private AtomicBoolean zookeeperStopFinished = new AtomicBoolean(false);
+	//	private ExecutorService zookeeperStartExecutor;
+	//	private AtomicBoolean zookeeperStartFinished = new AtomicBoolean(false);
+	//	private AtomicBoolean zookeeperStopFinished = new AtomicBoolean(false);
 	private Process zookeeperStopProcess;
-	
+
 	private Process kafkaStartProcess;
 	private Process kafkaStartProcessOne;
 	private Process kafkaStartProcessTwo;
-	
+
 	private ExecutorService kafkaStartExecutor;
 	private ExecutorService kafkaStartExecutorOne;
 	private ExecutorService kafkaStartExecutorTwo;
-	
-//	private Process kafkaStopProcess;
-//	private Process kafkaStopProcessOne;
-//	private Process kafkaStopProcessTwo;
-	
+
+	//	private Process kafkaStopProcess;
+	//	private Process kafkaStopProcessOne;
+	//	private Process kafkaStopProcessTwo;
+
 	public void startZookeeper() throws Exception {
 		LOGGER.info(">>>>>>>>>>>> KafkaService.startZookeeper starting");
 		try {
 			if (zookeeperStartProcess == null || !zookeeperStartProcess.isAlive()) {
 				LOGGER.info(">>>>>>>>>>>> zookeeperStartProcess.isAlive={} ", (zookeeperStartProcess == null)? null : zookeeperStartProcess.isAlive());
-//				zookeeperStartFinished.set(false);
+				//				zookeeperStartFinished.set(false);
 				ProcessBuilder builder = new ProcessBuilder();
 				//	String script = "./bin/zookeeper-server-start.sh";
 				//builder.command("sh", "-c", script);
@@ -93,19 +100,19 @@ public class KafkaService {
 				builder.directory(new File(kafkaServerHome));
 				zookeeperStartProcess = builder.start();
 
-//				zookeeperStartExecutor = Executors.newSingleThreadExecutor();
-//				zookeeperStartExecutor.submit(new Runnable() {
-//
-//					@Override
-//					public void run() {
-//						BufferedReader reader = new BufferedReader(new InputStreamReader(zookeeperStartProcess.getInputStream()));
-//						reader.lines().forEach(line -> {
-//							LOGGER.info("********"+line);
-//						
-//						});
-//					}
-//
-//				});
+				//				zookeeperStartExecutor = Executors.newSingleThreadExecutor();
+				//				zookeeperStartExecutor.submit(new Runnable() {
+				//
+				//					@Override
+				//					public void run() {
+				//						BufferedReader reader = new BufferedReader(new InputStreamReader(zookeeperStartProcess.getInputStream()));
+				//						reader.lines().forEach(line -> {
+				//							LOGGER.info("********"+line);
+				//						
+				//						});
+				//					}
+				//
+				//				});
 
 				int zookeeperServerPort = Integer.valueOf(zookeeperServerPortStr);
 				while (!checkPortListening(zookeeperServerPort)) {
@@ -127,7 +134,7 @@ public class KafkaService {
 		try {
 			if (zookeeperStopProcess == null || !zookeeperStopProcess.isAlive()) {
 				LOGGER.info(">>>>>>>>>>>> zookeeperStopProcess.isAlive={} ", (zookeeperStopProcess == null)? null : zookeeperStopProcess.isAlive());
-//				zookeeperStopFinished.set(false);
+				//				zookeeperStopFinished.set(false);
 				ProcessBuilder builder = new ProcessBuilder();
 				//	String script = "./bin/zookeeper-server-start.sh";
 				//builder.command("sh", "-c", script);
@@ -138,11 +145,11 @@ public class KafkaService {
 
 				int exitVal = zookeeperStopProcess.waitFor();
 				if (exitVal == 0) {
-//					zookeeperStopFinished.set(true);
+					//					zookeeperStopFinished.set(true);
 					LOGGER.info(">>> Success!!! stopZookeeper, exitVal={}", exitVal);
 				} else {
 					LOGGER.error(">>> Error!!! stopZookeeper, exitcode={}", exitVal);
-//					zookeeperStopFinished.set(true);
+					//					zookeeperStopFinished.set(true);
 				}
 				int zookeeperServerPort = Integer.valueOf(zookeeperServerPortStr);
 				while (checkPortListening(zookeeperServerPort)) {
@@ -168,7 +175,7 @@ public class KafkaService {
 		try {
 			if (kafkaStartProcess == null || !kafkaStartProcess.isAlive()) {
 				LOGGER.info(">>>>>>>>>>>> kafkaStartProcess.isAlive={} ", (kafkaStartProcess == null)? null : kafkaStartProcess.isAlive());
-//				kafkaStartFinished0.set(false);
+				//				kafkaStartFinished0.set(false);
 				ProcessBuilder builder = new ProcessBuilder();
 				//	String script = "./bin/zookeeper-server-start.sh";
 				//builder.command("sh", "-c", script);
@@ -185,7 +192,7 @@ public class KafkaService {
 						BufferedReader reader = new BufferedReader(new InputStreamReader(kafkaStartProcess.getInputStream()));
 						reader.lines().forEach(line -> {
 							LOGGER.info(line);
-							
+
 						});
 					}
 
@@ -210,7 +217,7 @@ public class KafkaService {
 		try {
 			if (kafkaStartProcessOne == null || !kafkaStartProcessOne.isAlive()) {
 				LOGGER.info(">>>>>>>>>>>> kafkaStartProcessOne.isAlive={} ", (kafkaStartProcessOne == null)? null : kafkaStartProcessOne.isAlive());
-//				kafkaStartFinished0.set(false);
+				//				kafkaStartFinished0.set(false);
 				ProcessBuilder builder = new ProcessBuilder();
 				//	String script = "./bin/zookeeper-server-start.sh";
 				//builder.command("sh", "-c", script);
@@ -227,7 +234,7 @@ public class KafkaService {
 						BufferedReader reader = new BufferedReader(new InputStreamReader(kafkaStartProcessOne.getInputStream()));
 						reader.lines().forEach(line -> {
 							LOGGER.info(line);
-							
+
 						});
 					}
 
@@ -252,7 +259,7 @@ public class KafkaService {
 		try {
 			if (kafkaStartProcessTwo == null || !kafkaStartProcessTwo.isAlive()) {
 				LOGGER.info(">>>>>>>>>>>> kafkaStartProcessTwo.isAlive={} ", (kafkaStartProcessTwo == null)? null : kafkaStartProcessTwo.isAlive());
-//				kafkaStartFinished0.set(false);
+				//				kafkaStartFinished0.set(false);
 				ProcessBuilder builder = new ProcessBuilder();
 				//	String script = "./bin/zookeeper-server-start.sh";
 				//builder.command("sh", "-c", script);
@@ -269,7 +276,7 @@ public class KafkaService {
 						BufferedReader reader = new BufferedReader(new InputStreamReader(kafkaStartProcessTwo.getInputStream()));
 						reader.lines().forEach(line -> {
 							LOGGER.info(line);
-							
+
 						});
 					}
 
@@ -294,9 +301,9 @@ public class KafkaService {
 		try {
 			if (kafkaStartProcess != null && kafkaStartProcess.isAlive()) {
 				LOGGER.info(">>>>>>>>>>>> kafkaStartProcess.isAlive={} ", (kafkaStartProcess == null)? null : kafkaStartProcess.isAlive());
-//				
+				//				
 				kafkaStartProcess.destroy();
-				
+
 				int kafkaServerPort = Integer.valueOf(kafkaServerPortStr);
 				while (checkPortListening(kafkaServerPort)) {
 					Thread.sleep(10000);
@@ -307,7 +314,7 @@ public class KafkaService {
 			} else {
 				LOGGER.warn(" >>> kafkaStartProcess IS NOT ALIVE.");
 			}
-			
+
 			if (!kafkaStartExecutor.isTerminated()) {
 				if (!kafkaStartExecutor.isShutdown()) {
 					kafkaStartExecutor.shutdown();
@@ -316,7 +323,7 @@ public class KafkaService {
 					Thread.sleep(1000);
 					LOGGER.info(">>>> waiting for executor shuttung down.");;
 				}
-				
+
 				while (!kafkaStartExecutor.isTerminated()) {
 					Thread.sleep(1000);
 					LOGGER.info(">>>> waiting for executor termainting.");;
@@ -325,7 +332,7 @@ public class KafkaService {
 			if (kafkaStartExecutor.isTerminated()) {
 				LOGGER.info(">>>> kafkaStartExecutor is Terminated!!!!!");
 			} 
-			
+
 		} catch (IOException e) {
 			LOGGER.error(">>> Error!!!, stopKafka, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
 			throw e;
@@ -336,9 +343,9 @@ public class KafkaService {
 		try {
 			if (kafkaStartProcessOne != null && kafkaStartProcessOne.isAlive()) {
 				LOGGER.info(">>>>>>>>>>>> kafkaStartProcessOne.isAlive={} ", (kafkaStartProcessOne == null)? null : kafkaStartProcessOne.isAlive());
-//				
+				//				
 				kafkaStartProcessOne.destroy();
-				
+
 				int kafkaServerPortOne = Integer.valueOf(kafkaServerPortOneStr);
 				while (checkPortListening(kafkaServerPortOne)) {
 					Thread.sleep(10000);
@@ -349,7 +356,7 @@ public class KafkaService {
 			} else {
 				LOGGER.warn(" >>> kafkaStartProcessOne IS NOT ALIVE.");
 			}
-			
+
 			if (!kafkaStartExecutorOne.isTerminated()) {
 				if (!kafkaStartExecutorOne.isShutdown()) {
 					kafkaStartExecutorOne.shutdown();
@@ -358,7 +365,7 @@ public class KafkaService {
 					Thread.sleep(1000);
 					LOGGER.info(">>>> waiting for executor one shuttung down.");;
 				}
-				
+
 				while (!kafkaStartExecutorOne.isTerminated()) {
 					Thread.sleep(1000);
 					LOGGER.info(">>>> waiting for executor one termainting.");;
@@ -377,9 +384,9 @@ public class KafkaService {
 		try {
 			if (kafkaStartProcessTwo != null && kafkaStartProcessTwo.isAlive()) {
 				LOGGER.info(">>>>>>>>>>>> kafkaStartProcessTwo.isAlive={} ", (kafkaStartProcessTwo == null)? null : kafkaStartProcessOne.isAlive());
-//				
+				//				
 				kafkaStartProcessTwo.destroy();
-				
+
 				int kafkaServerPortOne = Integer.valueOf(kafkaServerPortTwoStr);
 				while (checkPortListening(kafkaServerPortOne)) {
 					Thread.sleep(10000);
@@ -398,7 +405,7 @@ public class KafkaService {
 					Thread.sleep(1000);
 					LOGGER.info(">>>> waiting for executor two shuttung down.");;
 				}
-				
+
 				while (!kafkaStartExecutorTwo.isTerminated()) {
 					Thread.sleep(1000);
 					LOGGER.info(">>>> waiting for executor two termainting.");;
@@ -409,6 +416,113 @@ public class KafkaService {
 			} 
 		} catch (IOException e) {
 			LOGGER.error(">>> Error!!!, stopKafka, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+			throw e;
+		} 
+	}
+	public Set<String> listTopics() throws Exception {
+		LOGGER.info(">>>>>>>>>>>> listTopics ");
+		List<String> topics = new ArrayList<String>();
+		try {
+
+			ProcessBuilder builder = new ProcessBuilder();
+			String script = "./bin/kafka-topics.sh" + " --list --bootstrap-server " + kafkaBootstrapServer;
+			builder.command("sh", "-c", script);
+			//				builder.command(kafkaTopicsScript + " --list --bootstrap-server " + kafkaBootstrapServer);
+
+			//				builder.command(kafkaTopicsScript, "--list", "--bootstrap-server", kafkaBootstrapServer);
+
+			builder.directory(new File(kafkaServerHome));
+			Process listTopicsProcess = builder.start();
+
+			ExecutorService listTopicsExecutor = Executors.newSingleThreadExecutor();
+			listTopicsExecutor.submit(new Runnable() {
+
+				@Override
+				public void run() {
+					BufferedReader reader = new BufferedReader(new InputStreamReader(listTopicsProcess.getInputStream()));
+					reader.lines().forEach(topic -> topics.add(topic));
+				}
+
+			});
+			int exitVal = listTopicsProcess.waitFor();
+			if (exitVal == 0) {
+
+				LOGGER.info(">>> Success!!! listTopics, exitVal={}", exitVal);
+			} else {
+				LOGGER.error(">>> Error!!! listTopics, exitcode={}", exitVal);
+				String errStr = (topics.size() > 0)? topics.get(0) : "";
+				throw new Exception(errStr);
+			}
+
+
+
+		} catch (IOException e) {
+			LOGGER.error(">>> Error!!!, listTopics, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+			throw e;
+		} catch (InterruptedException e) {
+			LOGGER.error(">>> Error!!!, listTopics, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+			throw e;
+		}
+		return new HashSet<>(topics);
+	}
+	public void createTopic(String topic, Integer replicationFactor, Integer numPartitions) throws Exception {
+		LOGGER.info(">>>>>>>>>>>> createTopic topic=={}", topic);
+		try {
+
+			ProcessBuilder builder = new ProcessBuilder();
+			String script = "./bin/kafka-topics.sh --create --bootstrap-server " + kafkaBootstrapServer + " --replication-factor " + replicationFactor + " --partitions " + numPartitions + " --topic " + topic;
+			builder.command("sh", "-c", script);
+
+			builder.directory(new File(kafkaServerHome));
+			Process createTopicProcess = builder.start();
+
+			int exitVal = createTopicProcess.waitFor();
+			if (exitVal == 0) {
+				LOGGER.info(">>> Success!!! createTopic:{}, exitcode={}", topic, exitVal);
+			} else {
+				LOGGER.error(">>> Error!!! createTopic:{}, exitcode={}", topic, exitVal);
+			}
+			LOGGER.info(">>> createTopicProcess isalive={}", createTopicProcess.isAlive());
+			if (!createTopicProcess.isAlive()) {
+				createTopicProcess.destroy();
+			}
+
+
+		} catch (IOException e) {
+			LOGGER.error(">>> Error!!!, createTopic, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+			throw e;
+		} catch (InterruptedException e) {
+			LOGGER.error(">>> Error!!!, createTopic, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+			throw e;
+		} 
+	}
+	public void deleteTopic(String topic) throws Exception {
+		LOGGER.info(">>>>>>>>>>>> deleteTopic topic=={}", topic);
+		try {
+
+			ProcessBuilder builder = new ProcessBuilder();
+			String script = "./bin/kafka-topics.sh --delete --bootstrap-server " + kafkaBootstrapServer + " --topic " + topic;
+			builder.command("sh", "-c", script);
+
+			builder.directory(new File(kafkaServerHome));
+			Process deleteTopicProcess = builder.start();
+
+			int exitVal = deleteTopicProcess.waitFor();
+			if (exitVal == 0) {
+				LOGGER.info(">>> Success!!! deleteTopic:{}, exitcode={}", topic, exitVal);
+			} else {
+				LOGGER.error(">>> Error!!! deleteTopic:{}, exitcode={}", topic, exitVal);
+			}
+			LOGGER.info(">>> deleteTopicProcess isalive={}", deleteTopicProcess.isAlive());
+			if (!deleteTopicProcess.isAlive()) {
+				deleteTopicProcess.destroy();
+			}
+
+		} catch (IOException e) {
+			LOGGER.error(">>> Error!!!, deleteTopic, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+			throw e;
+		} catch (InterruptedException e) {
+			LOGGER.error(">>> Error!!!, deleteTopic, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
 			throw e;
 		} 
 	}
