@@ -1,4 +1,4 @@
-package com.transglobe.streamingetl.cluster.kafka.controller;
+package com.transglobe.streamingetl.cluster.kafka.rest.controller;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.transglobe.streamingetl.cluster.kafka.service.KafkaService;
+import com.transglobe.streamingetl.cluster.kafka.rest.service.KafkaService;
 
 
 @RestController

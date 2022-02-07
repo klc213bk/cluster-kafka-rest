@@ -1,4 +1,4 @@
-package com.transglobe.streamingetl.cluster.kafka.service;
+package com.transglobe.streamingetl.cluster.kafka.rest.service;
 
 import java.io.BufferedReader;
 import java.io.File;
