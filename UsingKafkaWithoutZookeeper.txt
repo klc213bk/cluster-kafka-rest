@@ -1,0 +1,72 @@
+#Setup cluster without zookeeper
+>> Download kafka 2.8.0 above
+
+>>create more server.properties for our clusters.
+$ cd config/kraft
+$ cp server.properties serverA.properties
+$ cp server.properties serverB.properties
+
+############################
+## serverA.properties ##
+
+node.id=1
+
+process.roles=broker,controller
+
+inter.broker.listener.name=PLAINTEXT
+
+controller.listener.names=CONTROLLER
+
+listeners=PLAINTEXT://:9092,CONTROLLER://:19092
+
+log.dirs=/tmp/serverA/kraft-combined-logs
+
+listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
+
+controller.quorum.voters=1@localhost:19092,2@localhost:19093,3@localhost:19094
+
+#############################
+
+./bin/kafka-storage.sh random-uuid
+# --> Please note that uuid : XXX
+
+./bin/kafka-storage.sh format -t XXX -c <server_config_location>
+
+# Creating cluster and log directories
+
+./bin/kafka-storage.sh format -t XXX -c ./config/kraft/serverA.properties
+
+./bin/kafka-storage.sh format -t XXX -c ./config/kraft/serverB.properties
+
+# Head property
+
+export KAFKA_HEAP_OPTS="-Xmx200M –Xms100M"
+
+# run servers
+
+./bin/kafka-server-start.sh -daemon ./config/kraft/serverA.properties
+./bin/kafka-server-start.sh -daemon ./config/kraft/serverB.properties
+
+#######################################
+# Create a topic kraft-test
+$ ./bin/kafka-topics.sh --create --topic kraft-test --partitions 2 --replication-factor 2 --bootstrap-server localhost:9092
+
+# list topics
+$ ./bin/kafka-topics.sh --bootstrap-server localhost:9093 --list
+
+
+# Producing data
+$ ./bin/kafka-console-producer.sh --broker-list localhost:9092 --topic kraft-test
+
+# consuming data
+$ ./bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic kraft-test
+
+
+
+
+
+
+
+
+
+

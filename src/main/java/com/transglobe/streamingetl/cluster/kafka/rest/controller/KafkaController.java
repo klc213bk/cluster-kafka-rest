@@ -48,15 +48,15 @@ public class KafkaController {
 		
 		return new ResponseEntity<String>("OK", HttpStatus.OK);
 	}
-	@PostMapping(path="/startZookeeper", produces=MediaType.APPLICATION_JSON_VALUE)
+	@PostMapping(path="/startCluster", produces=MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public ResponseEntity<Object> startZookeeper() {
-		logger.info(">>>>controller startZookeeper is called");
+	public ResponseEntity<Object> startCluster() {
+		logger.info(">>>>controller startCluster is called");
 		
 		ObjectNode objectNode = mapper.createObjectNode();
 		
 		try {
-			kafkaService.startZookeeper();
+			kafkaService.startCluster();
 			objectNode.put("returnCode", "0000");
 		} catch (Exception e) {
 			objectNode.put("returnCode", "-9999");
@@ -64,19 +64,19 @@ public class KafkaController {
 			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
 		}
 		
-		logger.info(">>>>controller startZookeeper finished ");
+		logger.info(">>>>controller startCluster finished ");
 		
 		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
 	}
-	@PostMapping(path="/stopZookeeper", produces=MediaType.APPLICATION_JSON_VALUE)
+	@PostMapping(path="/stopCluster", produces=MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public ResponseEntity<Object> stopZookeeper() {
-		logger.info(">>>>controller stopZookeeper is called");
+	public ResponseEntity<Object> stopCluster() {
+		logger.info(">>>>controller stopCluster is called");
 		
 		ObjectNode objectNode = mapper.createObjectNode();
 		
 		try {
-			kafkaService.stopZookeeper();
+			kafkaService.stopCluster();
 			objectNode.put("returnCode", "0000");
 		} catch (Exception e) {
 			objectNode.put("returnCode", "-9999");
@@ -84,173 +84,11 @@ public class KafkaController {
 			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
 		}
 		
-		logger.info(">>>>controller stopZookeeper finished ");
-		
-		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-	}
-	@PostMapping(path="/startKafka", produces=MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<Object> startKafka() {
-		logger.info(">>>>controller startKafka is called");
-		
-		ObjectNode objectNode = mapper.createObjectNode();
-		
-		try {
-			kafkaService.startKafka();
-			objectNode.put("returnCode", "0000");
-		} catch (Exception e) {
-			objectNode.put("returnCode", "-9999");
-			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
-			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
-		}
-		
-		logger.info(">>>>controller startKafka finished ");
-		
-		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-	}
-	@PostMapping(path="/startKafka/1", produces=MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<Object> startKafkaOne() {
-		logger.info(">>>>controller startKafkaOne is called");
-		
-		ObjectNode objectNode = mapper.createObjectNode();
-		
-		try {
-			kafkaService.startKafkaOne();
-			objectNode.put("returnCode", "0000");
-		} catch (Exception e) {
-			objectNode.put("returnCode", "-9999");
-			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
-			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
-		}
-		
-		logger.info(">>>>controller startKafkaOne finished ");
-		
-		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-	}
-	@PostMapping(path="/startKafka/2", produces=MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<Object> startKafkaTwo() {
-		logger.info(">>>>controller startKafkaTwo is called");
-		
-		ObjectNode objectNode = mapper.createObjectNode();
-		
-		try {
-			kafkaService.startKafkaTwo();
-			objectNode.put("returnCode", "0000");
-		} catch (Exception e) {
-			objectNode.put("returnCode", "-9999");
-			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
-			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
-		}
-		
-		logger.info(">>>>controller startKafkaTwo finished ");
-		
-		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-	}
-	@PostMapping(path="/stopKafka", produces=MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<Object> stopKafka() {
-		logger.info(">>>>controller stopKafka is called");
-		
-		ObjectNode objectNode = mapper.createObjectNode();
-		
-		try {
-			kafkaService.stopKafka();
-			objectNode.put("returnCode", "0000");
-		} catch (Exception e) {
-			objectNode.put("returnCode", "-9999");
-			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
-			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
-		}
-		
-		logger.info(">>>>controller stopKafka finished ");
-		
-		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-	}
-	@PostMapping(path="/stopKafka/1", produces=MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<Object> stopKafkaOne() {
-		logger.info(">>>>controller stopKafkaOne is called");
-		
-		ObjectNode objectNode = mapper.createObjectNode();
-		
-		try {
-			kafkaService.stopKafkaOne();
-			objectNode.put("returnCode", "0000");
-		} catch (Exception e) {
-			objectNode.put("returnCode", "-9999");
-			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
-			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
-		}
-		
-		logger.info(">>>>controller stopKafkaOne finished ");
-		
-		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-	}
-	@PostMapping(path="/stopKafka/2", produces=MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<Object> stopKafkaTwo() {
-		logger.info(">>>>controller stopKafkaTwo is called");
-		
-		ObjectNode objectNode = mapper.createObjectNode();
-		
-		try {
-			kafkaService.stopKafkaTwo();
-			objectNode.put("returnCode", "0000");
-		} catch (Exception e) {
-			objectNode.put("returnCode", "-9999");
-			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
-			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
-		}
-		
-		logger.info(">>>>controller stopKafkaTwo finished ");
+		logger.info(">>>>controller stopCluster finished ");
 		
 		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
 	}
 	
-//	@GetMapping(path="/zookeeper/alive", produces=MediaType.APPLICATION_JSON_VALUE)
-//	@ResponseBody
-//	public ResponseEntity<Object> isZookeeperAlive() {
-//		logger.info(">>>>controller isZookeeperAlive is called");
-//		
-//		ObjectNode objectNode = mapper.createObjectNode();
-//	
-//		try {
-//			boolean isAlive = kafkaService.isZookeeperAlive();
-//			objectNode.put("returnCode", "0000");
-//			objectNode.put("alive", isAlive? Boolean.TRUE : Boolean.FALSE);
-//		} catch (Exception e) {
-//			objectNode.put("returnCode", "-9999");
-//			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
-//			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
-//		}
-//		
-//		logger.info(">>>>controller isZookeeperAlive finished ");
-//		
-//		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-//	}
-//	@GetMapping(path="/kafka/alive", produces=MediaType.APPLICATION_JSON_VALUE)
-//	@ResponseBody
-//	public ResponseEntity<Object> isKafkaAlive() {
-//		logger.info(">>>>controller isKafkaAlive is called");
-//		
-//		ObjectNode objectNode = mapper.createObjectNode();
-//	
-//		try {
-//			boolean isAlive = kafkaService.isKafkaAlive();
-//			objectNode.put("returnCode", "0000");
-//			objectNode.put("alive", isAlive? Boolean.TRUE : Boolean.FALSE);
-//		} catch (Exception e) {
-//			objectNode.put("returnCode", "-9999");
-//			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
-//			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
-//		}
-//		
-//		logger.info(">>>>controller isKafkaAlive finished ");
-//		
-//		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-//	}
 	@GetMapping(path="/listTopics", produces=MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<Object> listTopics() {
