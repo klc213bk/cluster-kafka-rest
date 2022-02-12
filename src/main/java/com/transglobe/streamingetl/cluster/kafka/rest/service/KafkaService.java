@@ -11,13 +11,13 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.KafkaFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,39 +34,41 @@ public class KafkaService {
 	@Value("${kafka.server.home}")
 	private String kafkaServerHome;
 
-	@Value("${kafka.server.port}")
-	private String kafkaServerPortStr;
+	@Value("${kafka.start.script}")
+	private String kafkaStartScript;
+	
+	@Value("${kafka.cluster.prop.A}")
+	private String kafkaClusterPropA;
+	
+	@Value("${kafka.cluster.prop.B}")
+	private String kafkaClusterPropB;
 
-	@Value("${kafka.bootstrap.server}")
-	private String kafkaBootstrapServer;
-
-	private Process clusterStartProcess;
-	private ExecutorService clusterStartExecutor;
-
-	//	private Process kafkaStopProcess;
-	//	private Process kafkaStopProcessOne;
-	//	private Process kafkaStopProcessTwo;
+	private Process clusterStartProcessA;
+	private ExecutorService clusterStartExecutorA;
+	
+	private Process clusterStartProcessB;
+	private ExecutorService clusterStartExecutorB;
 
 	public void startCluster() throws Exception {
 		LOGGER.info(">>>>>>>>>>>> KafkaService.startCluster starting");
 		try {
-			if (clusterStartProcess == null || !clusterStartProcess.isAlive()) {
-				LOGGER.info(">>>>>>>>>>>> clusterStartProcess.isAlive={} ", (clusterStartProcess == null)? null : clusterStartProcess.isAlive());
+			if (clusterStartProcessA == null || !clusterStartProcessA.isAlive()) {
+				LOGGER.info(">>>>>>>>>>>> clusterStartProcessA.isAlive={} ", (clusterStartProcessA == null)? null : clusterStartProcessA.isAlive());
 				//				kafkaStartFinished0.set(false);
 				ProcessBuilder builder = new ProcessBuilder();
 				//	String script = "./bin/zookeeper-server-start.sh";
 				//builder.command("sh", "-c", script);
-				builder.command(clusterStartScript);
+				builder.command(kafkaStartScript, kafkaClusterPropA);
 
-				builder.directory(new File("."));
-				clusterStartProcess = builder.start();
+				builder.directory(new File(kafkaServerHome));
+				clusterStartProcessA = builder.start();
 
-				clusterStartExecutor = Executors.newSingleThreadExecutor();
-				clusterStartExecutor.submit(new Runnable() {
+				clusterStartExecutorA = Executors.newSingleThreadExecutor();
+				clusterStartExecutorA.submit(new Runnable() {
 
 					@Override
 					public void run() {
-						BufferedReader reader = new BufferedReader(new InputStreamReader(clusterStartProcess.getInputStream()));
+						BufferedReader reader = new BufferedReader(new InputStreamReader(clusterStartProcessA.getInputStream()));
 						reader.lines().forEach(line -> {
 							LOGGER.info(line);
 
@@ -74,6 +76,29 @@ public class KafkaService {
 					}
 
 				});
+				
+				ProcessBuilder builder2 = new ProcessBuilder();
+				//	String script = "./bin/zookeeper-server-start.sh";
+				//builder.command("sh", "-c", script);
+				builder2.command(kafkaStartScript, kafkaClusterPropB);
+
+				builder2.directory(new File(kafkaServerHome));
+				clusterStartProcessB = builder2.start();
+
+				clusterStartExecutorB = Executors.newSingleThreadExecutor();
+				clusterStartExecutorB.submit(new Runnable() {
+
+					@Override
+					public void run() {
+						BufferedReader reader = new BufferedReader(new InputStreamReader(clusterStartProcessB.getInputStream()));
+						reader.lines().forEach(line -> {
+							LOGGER.info(line);
+
+						});
+					}
+
+				});
+				
 				while (true) {
 					try {
 						listTopics();
@@ -84,7 +109,10 @@ public class KafkaService {
 						continue;
 					}
 				}
-
+				LOGGER.info(">>>>>>>>>>>> clusterStartProcessA.isAlive={} ", (clusterStartProcessA == null)? null : clusterStartProcessA.isAlive());
+				LOGGER.info(">>>>>>>>>>>> clusterStartProcessB.isAlive={} ", (clusterStartProcessB == null)? null : clusterStartProcessB.isAlive());
+				
+				
 				LOGGER.info(">>>>>>>>>>>> KafkaService.startCluster End");
 			} else {
 				LOGGER.warn(" >>> clusterStartProcess is currently Running.");
@@ -94,47 +122,71 @@ public class KafkaService {
 			throw e;
 		} 
 	}
-
-	
 	
 	public void stopCluster() throws Exception {
 		LOGGER.info(">>>>>>>>>>>> KafkaService.stopCluster starting...");
 		try {
-			if (clusterStartProcess != null && clusterStartProcess.isAlive()) {
-				LOGGER.info(">>>>>>>>>>>> clusterStartProcess.isAlive={} ", (clusterStartProcess == null)? null : clusterStartProcess.isAlive());
-				//				
-				clusterStartProcess.destroy();
+			LOGGER.info(">>>>>>>>>>>> clusterStartProcessA.isAlive={} ", (clusterStartProcessA == null)? null : clusterStartProcessA.isAlive());
 
-				int kafkaServerPort = Integer.valueOf(kafkaServerPortStr);
-				while (checkPortListening(kafkaServerPort)) {
-					Thread.sleep(10000);
-					LOGGER.info(">>>> Sleep for 10 second");;
-				}
+			LOGGER.info(">>>>>>>>>>>> clusterStartProcessB.isAlive={} ", (clusterStartProcessB == null)? null : clusterStartProcessB.isAlive());
+			
+			if (clusterStartProcessB != null && clusterStartProcessB.isAlive()) {
+				//				
+				clusterStartProcessB.destroy();
+
 
 				LOGGER.info(">>>>>>>>>>>> KafkaService.stopCluster End");
 			} else {
-				LOGGER.warn(" >>> clusterStartProcess IS NOT ALIVE.");
+				LOGGER.warn(" >>> clusterStartProcessB IS NOT ALIVE.");
+			}
+			
+			if (clusterStartProcessA != null && clusterStartProcessA.isAlive()) {
+				//				
+				clusterStartProcessA.destroy();
+
+
+				LOGGER.info(">>>>>>>>>>>> KafkaService.stopCluster End");
+			} else {
+				LOGGER.warn(" >>> clusterStartProcessA IS NOT ALIVE.");
 			}
 
-			if (!clusterStartExecutor.isTerminated()) {
-				if (!clusterStartExecutor.isShutdown()) {
-					clusterStartExecutor.shutdown();
+			if (!clusterStartExecutorB.isTerminated()) {
+				if (!clusterStartExecutorB.isShutdown()) {
+					clusterStartExecutorB.shutdown();
 				}
-				while (!clusterStartExecutor.isShutdown()) {
+				while (!clusterStartExecutorB.isShutdown()) {
 					Thread.sleep(1000);
 					LOGGER.info(">>>> waiting for executor shuttung down.");;
 				}
 
-				while (!clusterStartExecutor.isTerminated()) {
+				while (!clusterStartExecutorB.isTerminated()) {
 					Thread.sleep(1000);
 					LOGGER.info(">>>> waiting for executor termainting.");;
 				}
 			} 
-			if (clusterStartExecutor.isTerminated()) {
-				LOGGER.info(">>>> clusterStartExecutor is Terminated!!!!!");
+			if (clusterStartExecutorB.isTerminated()) {
+				LOGGER.info(">>>> clusterStartExecutorB is Terminated!!!!!");
+			} 
+			
+			if (!clusterStartExecutorA.isTerminated()) {
+				if (!clusterStartExecutorA.isShutdown()) {
+					clusterStartExecutorA.shutdown();
+				}
+				while (!clusterStartExecutorA.isShutdown()) {
+					Thread.sleep(1000);
+					LOGGER.info(">>>> waiting for executor shuttung down.");;
+				}
+
+				while (!clusterStartExecutorA.isTerminated()) {
+					Thread.sleep(1000);
+					LOGGER.info(">>>> waiting for executor termainting.");;
+				}
+			} 
+			if (clusterStartExecutorA.isTerminated()) {
+				LOGGER.info(">>>> clusterStartExecutorA is Terminated!!!!!");
 			} 
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			LOGGER.error(">>> Error!!!, stopCluster, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
 			throw e;
 		} 
@@ -153,154 +205,55 @@ public class KafkaService {
 
 			return topicNames;
 			
-//			ProcessBuilder builder = new ProcessBuilder();
-//			String script = "./bin/kafka-topics.sh" + " --list --bootstrap-server " + kafkaBootstrapServer;
-//			builder.command("sh", "-c", script);
-//			//				builder.command(kafkaTopicsScript + " --list --bootstrap-server " + kafkaBootstrapServer);
-//
-//			//				builder.command(kafkaTopicsScript, "--list", "--bootstrap-server", kafkaBootstrapServer);
-//
-//			builder.directory(new File(kafkaServerHome));
-//			Process listTopicsProcess = builder.start();
-//
-//			ExecutorService listTopicsExecutor = Executors.newSingleThreadExecutor();
-//			listTopicsExecutor.submit(new Runnable() {
-//
-//				@Override
-//				public void run() {
-//					BufferedReader reader = new BufferedReader(new InputStreamReader(listTopicsProcess.getInputStream()));
-//					reader.lines().forEach(topic -> topics.add(topic));
-//				}
-//
-//			});
-//			int exitVal = listTopicsProcess.waitFor();
-//			if (exitVal == 0) {
-//
-//				LOGGER.info(">>> Success!!! listTopics, exitVal={}", exitVal);
-//			} else {
-//				LOGGER.error(">>> Error!!! listTopics, exitcode={}", exitVal);
-//				String errStr = (topics.size() > 0)? topics.get(0) : "";
-//				throw new Exception(errStr);
-//			}
-
-
-
 		} catch (Exception e) {
 			LOGGER.error(">>> Error!!!, listTopics, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
 			throw e;
 		} 
 
 	}
-	public void createTopic(String topic, Integer replicationFactor, Integer numPartitions) throws Exception {
+	public void createTopic(String topic, Integer numPartitions, Short replicationFactor) throws Exception {
 		LOGGER.info(">>>>>>>>>>>> createTopic topic=={}", topic);
 		try {
+			Set<NewTopic> topicSet = new HashSet<>();
+			NewTopic newTopic = new NewTopic(topic, numPartitions, replicationFactor);
+			topicSet.add(newTopic);
+			
+			AdminClient adminClient = createAdminClient();
+			CreateTopicsResult result = adminClient.createTopics(topicSet);
+			KafkaFuture<Void> futTopic = result.all();
+			futTopic.get();
+			
+			adminClient.close();
 
-			ProcessBuilder builder = new ProcessBuilder();
-			String script = "./bin/kafka-topics.sh --create --bootstrap-server " + kafkaBootstrapServer + " --replication-factor " + replicationFactor + " --partitions " + numPartitions + " --topic " + topic;
-			builder.command("sh", "-c", script);
-
-			builder.directory(new File(kafkaServerHome));
-			Process createTopicProcess = builder.start();
-
-			int exitVal = createTopicProcess.waitFor();
-			if (exitVal == 0) {
-				LOGGER.info(">>> Success!!! createTopic:{}, exitcode={}", topic, exitVal);
-			} else {
-				LOGGER.error(">>> Error!!! createTopic:{}, exitcode={}", topic, exitVal);
-			}
-			LOGGER.info(">>> createTopicProcess isalive={}", createTopicProcess.isAlive());
-			if (!createTopicProcess.isAlive()) {
-				createTopicProcess.destroy();
-			}
-
-
-		} catch (IOException e) {
+		} catch (Exception e) {
 			LOGGER.error(">>> Error!!!, createTopic, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
 			throw e;
-		} catch (InterruptedException e) {
-			LOGGER.error(">>> Error!!!, createTopic, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
-			throw e;
-		} 
+		}
 	}
 	public void deleteTopic(String topic) throws Exception {
 		LOGGER.info(">>>>>>>>>>>> deleteTopic topic=={}", topic);
 		try {
 
-			ProcessBuilder builder = new ProcessBuilder();
-			String script = "./bin/kafka-topics.sh --delete --bootstrap-server " + kafkaBootstrapServer + " --topic " + topic;
-			builder.command("sh", "-c", script);
+			Set<String> topicSet = new HashSet<>();
+			topicSet.add(topic);
+			
+			AdminClient adminClient = createAdminClient();
+			DeleteTopicsResult result = adminClient.deleteTopics(topicSet);
+			KafkaFuture<Void> futTopic = result.all();
+			futTopic.get();
+			
+			adminClient.close();
 
-			builder.directory(new File(kafkaServerHome));
-			Process deleteTopicProcess = builder.start();
-
-			int exitVal = deleteTopicProcess.waitFor();
-			if (exitVal == 0) {
-				LOGGER.info(">>> Success!!! deleteTopic:{}, exitcode={}", topic, exitVal);
-			} else {
-				LOGGER.error(">>> Error!!! deleteTopic:{}, exitcode={}", topic, exitVal);
-			}
-			LOGGER.info(">>> deleteTopicProcess isalive={}", deleteTopicProcess.isAlive());
-			if (!deleteTopicProcess.isAlive()) {
-				deleteTopicProcess.destroy();
-			}
-
-		} catch (IOException e) {
+		} catch (Exception e) {
 			LOGGER.error(">>> Error!!!, deleteTopic, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
 			throw e;
-		} catch (InterruptedException e) {
-			LOGGER.error(">>> Error!!!, deleteTopic, msg={}, stacktrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
-			throw e;
-		} 
+		}
 	}
 	private AdminClient createAdminClient() {
 		Properties props = new Properties();
 		props.setProperty(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
 		return  AdminClient.create(props);
 	}
-	private boolean checkPortListening(int port) throws Exception {
-		LOGGER.info(">>>>>>>>>>>> checkPortListening:{} ", port);
 
-		BufferedReader reader = null;
-		try {
-			ProcessBuilder builder = new ProcessBuilder();
-			String script = "netstat -tnlp | grep :" + port;
-			builder.command("bash", "-c", script);
-			//				builder.command(kafkaTopicsScript + " --list --bootstrap-server " + kafkaBootstrapServer);
-
-			//				builder.command(kafkaTopicsScript, "--list", "--bootstrap-server", kafkaBootstrapServer);
-
-			builder.directory(new File("."));
-			Process checkPortProcess = builder.start();
-
-			AtomicBoolean portRunning = new AtomicBoolean(false);
-
-
-			int exitVal = checkPortProcess.waitFor();
-			if (exitVal == 0) {
-				reader = new BufferedReader(new InputStreamReader(checkPortProcess.getInputStream()));
-				reader.lines().forEach(line -> {
-					if (StringUtils.contains(line, "LISTEN")) {
-						portRunning.set(true);
-						LOGGER.info(">>> Success!!! portRunning.set(true)");
-					}
-				});
-				reader.close();
-
-				LOGGER.info(">>> Success!!! portRunning={}", portRunning.get());
-			} else {
-				LOGGER.error(">>> Error!!!  exitcode={}", exitVal);
-
-
-			}
-			if (checkPortProcess.isAlive()) {
-				checkPortProcess.destroy();
-			}
-
-			return portRunning.get();
-		} finally {
-			if (reader != null) reader.close();
-		}
-
-	}
 }
 

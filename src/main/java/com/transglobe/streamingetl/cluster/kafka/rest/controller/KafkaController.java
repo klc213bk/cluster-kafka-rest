@@ -127,15 +127,15 @@ public class KafkaController {
 		
 		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
 	}
-	@PostMapping(path="/createTopic/{topic}/rf/{replicationFactor}/np/{numPartitions}", produces=MediaType.APPLICATION_JSON_VALUE)
+	@PostMapping(path="/createTopic/{topic}/numPartitions/{np}/replicationFactor/{rf}", produces=MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public ResponseEntity<Object> createTopic(@PathVariable("topic") String topic, @PathVariable("replicationFactor") Integer replicationFactor, @PathVariable("numPartitions") Integer numPartitions) {
+	public ResponseEntity<Object> createTopic(@PathVariable("topic") String topic, @PathVariable("np") Integer np, @PathVariable("rf") Short rf) {
 		logger.info(">>>>controller createTopic is called");
 		
 		ObjectNode objectNode = mapper.createObjectNode();
 	
 		try {
-			kafkaService.createTopic(topic, replicationFactor, numPartitions);
+			kafkaService.createTopic(topic, np, rf);
 			
 			objectNode.put("returnCode", "0000");
 		} catch (Exception e) {
