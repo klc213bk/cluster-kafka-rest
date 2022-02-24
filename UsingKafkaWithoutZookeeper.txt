@@ -26,26 +26,15 @@ listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SSL:SSL,
 controller.quorum.voters=1@localhost:19092,2@localhost:19093,3@localhost:19094
 
 #############################
+run ./prerequisite.sh
 
-./bin/kafka-storage.sh random-uuid
-# --> Please note that uuid : XXX
+$ ./start-kafka-cluster-rest.sh
 
-./bin/kafka-storage.sh format -t XXX -c <server_config_location>
+# to start cluster
+$ curl -X POST http://localhost:8101/startCluster
 
-# Creating cluster and log directories
-
-./bin/kafka-storage.sh format -t XXX -c ./config/kraft/serverA.properties
-
-./bin/kafka-storage.sh format -t XXX -c ./config/kraft/serverB.properties
-
-# Head property
-
-export KAFKA_HEAP_OPTS="-Xmx200M –Xms100M"
-
-# run servers
-
-./bin/kafka-server-start.sh -daemon ./config/kraft/serverA.properties
-./bin/kafka-server-start.sh -daemon ./config/kraft/serverB.properties
+# to stop cluster
+$ curl -X POST http://localhost:8101/stopCluster
 
 #######################################
 # Create a topic kraft-test

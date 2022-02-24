@@ -27,9 +27,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class KafkaService {
 	static final Logger LOGGER = LoggerFactory.getLogger(KafkaService.class);
-
-	@Value("${cluster.start.script}")
-	private String clusterStartScript;
 	
 	@Value("${kafka.server.home}")
 	private String kafkaServerHome;
