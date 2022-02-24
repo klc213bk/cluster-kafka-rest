@@ -23,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.transglobe.streamingetl.cluster.kafka.rest.bean.LastLogminerScn;
 import com.transglobe.streamingetl.cluster.kafka.rest.service.KafkaService;
 
 
@@ -175,59 +176,36 @@ public class KafkaController {
 		
 		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
 	}
-//	@PostMapping(path="/deleteAllTopics", produces=MediaType.APPLICATION_JSON_VALUE)
-//	@ResponseBody
-//	public ResponseEntity<Object> deleteAllTopics() {
-//		logger.info(">>>>controller deleteAllTopics is called");
-//		
-//		ObjectNode objectNode = mapper.createObjectNode();
-//	
-//		try {
-//			kafkaService.deleteAllTopics();
-//			
-//			objectNode.put("returnCode", "0000");
-//		} catch (Exception e) {
-//			String errMsg = ExceptionUtils.getMessage(e);
-//			String stackTrace = ExceptionUtils.getStackTrace(e);
-//			objectNode.put("returnCode", "-9999");
-//			objectNode.put("errMsg", errMsg);
-//			objectNode.put("returnCode", stackTrace);
-//			logger.error(">>> errMsg={}, stacktrace={}",errMsg,stackTrace);
-//		}
-//		
-//		logger.info(">>>>controller deleteAllTopics finished ");
-//		
-//		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-//	}
-//	@GetMapping(value="/lastLogminerScn")
-//	@ResponseBody
-//	public ResponseEntity<LastLogminerScn> getEbaoKafkaLastLogminerScn(){
-//		logger.info(">>>>getKafkaLastLogminerScn begin");
-//		long t0 = System.currentTimeMillis();
-//		String errMsg = null;
-//		String returnCode = "0000";
-//		Optional<LastLogminerScn> logminerLastScn = null;
-//		try {
-//			logminerLastScn = kafkaService.getEbaoKafkaLastLogminerScn();
-//			logger.info("    >>>>getKafkaLastLogminerScn finished.");
-//
-//			if (logminerLastScn.isPresent()) {
-//				return new ResponseEntity<>(logminerLastScn.get(), HttpStatus.OK);
-//			} else {
-//				throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-//			}
-//		} catch (Exception e) {
-//			returnCode = "-9999";
-//			errMsg = ExceptionUtils.getMessage(e);
-//			logger.error(">>>errMsg:{}, stacktrace={}", errMsg, ExceptionUtils.getStackTrace(e));
-//		}
-//
-//		long t1 = System.currentTimeMillis();
-//
-//		logger.info(">>>>getKafkaLastLogminerScn finished returnCode={}, span={}", returnCode, (t1 - t0));
-//
-//		return ResponseEntity.status(HttpStatus.OK).body(logminerLastScn.get());
-//
-//	}
+	
+	@GetMapping(value="/lastLogminerScn")
+	@ResponseBody
+	public ResponseEntity<LastLogminerScn> getEbaoKafkaLastLogminerScn(){
+		logger.info(">>>>getKafkaLastLogminerScn begin");
+		long t0 = System.currentTimeMillis();
+		String errMsg = null;
+		String returnCode = "0000";
+		Optional<LastLogminerScn> logminerLastScn = null;
+		try {
+			logminerLastScn = kafkaService.getEbaoKafkaLastLogminerScn();
+			logger.info("    >>>>getKafkaLastLogminerScn finished.");
+
+			if (logminerLastScn.isPresent()) {
+				return new ResponseEntity<>(logminerLastScn.get(), HttpStatus.OK);
+			} else {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+			}
+		} catch (Exception e) {
+			returnCode = "-9999";
+			errMsg = ExceptionUtils.getMessage(e);
+			logger.error(">>>errMsg:{}, stacktrace={}", errMsg, ExceptionUtils.getStackTrace(e));
+		}
+
+		long t1 = System.currentTimeMillis();
+
+		logger.info(">>>>getKafkaLastLogminerScn finished returnCode={}, span={}", returnCode, (t1 - t0));
+
+		return ResponseEntity.status(HttpStatus.OK).body(logminerLastScn.get());
+
+	}
 
 }

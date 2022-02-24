@@ -21,5 +21,7 @@ $ netstat -plten | grep java
 
 ###############################################################
 ### create folders
-/data/v2/kafka/serverA/
-/data/v2/kafka/serverB/
+/data/v2/kafka/serverA
+/data/v2/kafka/serverB
+/data/v2/kafka/connectors
+/data/v2/kafka/connect

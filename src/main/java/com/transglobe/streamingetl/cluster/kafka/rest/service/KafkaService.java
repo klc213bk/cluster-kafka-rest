@@ -4,9 +4,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -18,11 +21,24 @@ import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.transglobe.streamingetl.cluster.kafka.rest.bean.LastLogminerScn;
 
 @Service
 public class KafkaService {
@@ -40,6 +56,9 @@ public class KafkaService {
 	@Value("${kafka.cluster.prop.B}")
 	private String kafkaClusterPropB;
 
+	@Value("${kafka.bootstrap.server}")
+	private String kafkaBootstrapServer;
+	
 	private Process clusterStartProcessA;
 	private ExecutorService clusterStartExecutorA;
 	
@@ -246,11 +265,95 @@ public class KafkaService {
 			throw e;
 		}
 	}
+	public Optional<LastLogminerScn> getEbaoKafkaLastLogminerScn() {
+		LOGGER.info(">>>>>kafkaBootstrapServer={}",kafkaBootstrapServer);
+		Consumer<String, String> consumer = createConsumer(kafkaBootstrapServer, "ebao-getLogminerLastScn");
+
+		LastLogminerScn lastLogminer = null;
+		List<TopicPartition> tps = new ArrayList<>();
+		Map<String, List<PartitionInfo>> map = consumer.listTopics();
+		for (String topic : map.keySet()) {	
+		//	if (topic.startsWith("EBAOPRD1")) {
+				for (PartitionInfo pi : map.get(topic)) {
+					tps.add(new TopicPartition(pi.topic(), pi.partition()));
+				}
+
+	//		}
+		}
+		consumer.assign( tps);
+
+		long lastScn = 0L;
+		long lastCommitScn = 0L;
+		Map<TopicPartition, Long> offsetMap = consumer.endOffsets(tps);
+		for (TopicPartition tp : offsetMap.keySet()) {
+			//			long position = consumer.position(tp);
+			long offset = offsetMap.get(tp);
+
+			if (offset == 0) {
+				continue;
+			}
+			LOGGER.info("topic:{}, partition:{},offset:{}", tp.topic(), tp.partition(), offset);
+			consumer.seek(tp, offset- 1);
+
+			ConsumerRecords<String, String> consumerRecords = consumer.poll(Duration.ofMillis(1000));
+			System.out.println("record count:" + consumerRecords.count());
+
+			for (ConsumerRecord<String, String> record : consumerRecords) {
+				LOGGER.info("record key:{}, topic:{}, partition:{},offset:{}, timestamp:{}",
+						record.key(), record.topic(), record.partition(), record.offset(), record.timestamp());
+				//				System.out.println("Record Key " + record.key());
+				//				System.out.println("Record value " + record.value());
+				//				System.out.println("Record topic " + record.topic() + " partition " + record.partition());
+				//				System.out.println("Record offset " + record.offset() + " timestamp " + record.timestamp());
+
+				ObjectMapper objectMapper = new ObjectMapper();
+				objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+				try {
+					JsonNode jsonNode = objectMapper.readTree(record.value());
+					JsonNode payload = jsonNode.get("payload");
+					//	payloadStr = payload.toString();
+
+					String operation = payload.get("OPERATION").asText();
+					String tableName = payload.get("TABLE_NAME").asText();
+					Long scn = Long.valueOf(payload.get("SCN").asText());
+					Long commitScn = Long.valueOf(payload.get("COMMIT_SCN").asText());
+					String rowId = payload.get("ROW_ID").asText();
+					Long t = Long.valueOf(payload.get("TIMESTAMP").asText());
+					LOGGER.info("operation:{},tableName:{},scn:{}, commitScn:{}, rowId:{},timestamp",operation,tableName,scn,commitScn,rowId,t);
+
+					if (scn.longValue() > lastScn) {
+						lastScn = scn.longValue();
+					}
+					if (commitScn.longValue() > lastCommitScn) {
+						lastCommitScn = commitScn.longValue();
+					}
+				} catch(Exception e) {
+					e.printStackTrace();
+				} 
+			}
+
+		}
+		consumer.close();
+
+		lastLogminer = new LastLogminerScn(lastScn, lastCommitScn);
+		return Optional.of(lastLogminer);
+	}
 	private AdminClient createAdminClient() {
 		Properties props = new Properties();
-		props.setProperty(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+		props.setProperty(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServer);
 		return  AdminClient.create(props);
 	}
+	private Consumer<String, String> createConsumer(String kafkaBootstrapServer, String kafkaGroupId) {
+		Properties props = new Properties();
+		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServer);
+		props.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaGroupId);
+		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 
+		Consumer<String, String> consumer = new KafkaConsumer<>(props);
+
+		return consumer;
+	}
 }
 
