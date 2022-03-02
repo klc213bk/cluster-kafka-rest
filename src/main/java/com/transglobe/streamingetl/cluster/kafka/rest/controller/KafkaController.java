@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.transglobe.streamingetl.cluster.kafka.rest.bean.LastLogminerScn;
+import com.transglobe.streamingetl.cluster.kafka.rest.common.CreateTopic;
 import com.transglobe.streamingetl.cluster.kafka.rest.service.KafkaService;
 
 
@@ -49,46 +51,46 @@ public class KafkaController {
 		
 		return new ResponseEntity<String>("OK", HttpStatus.OK);
 	}
-	@PostMapping(path="/startCluster", produces=MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<Object> startCluster() {
-		logger.info(">>>>controller startCluster is called");
-		
-		ObjectNode objectNode = mapper.createObjectNode();
-		
-		try {
-			kafkaService.startCluster();
-			objectNode.put("returnCode", "0000");
-		} catch (Exception e) {
-			objectNode.put("returnCode", "-9999");
-			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
-			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
-		}
-		
-		logger.info(">>>>controller startCluster finished ");
-		
-		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-	}
-	@PostMapping(path="/stopCluster", produces=MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<Object> stopCluster() {
-		logger.info(">>>>controller stopCluster is called");
-		
-		ObjectNode objectNode = mapper.createObjectNode();
-		
-		try {
-			kafkaService.stopCluster();
-			objectNode.put("returnCode", "0000");
-		} catch (Exception e) {
-			objectNode.put("returnCode", "-9999");
-			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
-			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
-		}
-		
-		logger.info(">>>>controller stopCluster finished ");
-		
-		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
-	}
+//	@PostMapping(path="/startCluster", produces=MediaType.APPLICATION_JSON_VALUE)
+//	@ResponseBody
+//	public ResponseEntity<Object> startCluster() {
+//		logger.info(">>>>controller startCluster is called");
+//		
+//		ObjectNode objectNode = mapper.createObjectNode();
+//		
+//		try {
+//			kafkaService.startCluster();
+//			objectNode.put("returnCode", "0000");
+//		} catch (Exception e) {
+//			objectNode.put("returnCode", "-9999");
+//			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
+//			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
+//		}
+//		
+//		logger.info(">>>>controller startCluster finished ");
+//		
+//		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
+//	}
+//	@PostMapping(path="/stopCluster", produces=MediaType.APPLICATION_JSON_VALUE)
+//	@ResponseBody
+//	public ResponseEntity<Object> stopCluster() {
+//		logger.info(">>>>controller stopCluster is called");
+//		
+//		ObjectNode objectNode = mapper.createObjectNode();
+//		
+//		try {
+//			kafkaService.stopCluster();
+//			objectNode.put("returnCode", "0000");
+//		} catch (Exception e) {
+//			objectNode.put("returnCode", "-9999");
+//			objectNode.put("errMsg", ExceptionUtils.getMessage(e));
+//			objectNode.put("returnCode", ExceptionUtils.getStackTrace(e));
+//		}
+//		
+//		logger.info(">>>>controller stopCluster finished ");
+//		
+//		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
+//	}
 	
 	@GetMapping(path="/listTopics", produces=MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
@@ -128,15 +130,15 @@ public class KafkaController {
 		
 		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
 	}
-	@PostMapping(path="/createTopic/{topic}/numPartitions/{np}/replicationFactor/{rf}", produces=MediaType.APPLICATION_JSON_VALUE)
+	@PostMapping(path="/createTopic", produces=MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public ResponseEntity<Object> createTopic(@PathVariable("topic") String topic, @PathVariable("np") Integer np, @PathVariable("rf") Short rf) {
+	public ResponseEntity<Object> createTopic(@RequestBody CreateTopic createTopic) {
 		logger.info(">>>>controller createTopic is called");
 		
 		ObjectNode objectNode = mapper.createObjectNode();
 	
 		try {
-			kafkaService.createTopic(topic, np, rf);
+			kafkaService.createTopic(createTopic);
 			
 			objectNode.put("returnCode", "0000");
 		} catch (Exception e) {
@@ -152,6 +154,30 @@ public class KafkaController {
 		
 		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
 	}
+//	@PostMapping(path="/createTopic/{topic}/numPartitions/{np}/replicationFactor/{rf}", produces=MediaType.APPLICATION_JSON_VALUE)
+//	@ResponseBody
+//	public ResponseEntity<Object> createTopic0(@PathVariable("topic") String topic, @PathVariable("np") Integer np, @PathVariable("rf") Short rf) {
+//		logger.info(">>>>controller createTopic is called");
+//		
+//		ObjectNode objectNode = mapper.createObjectNode();
+//	
+//		try {
+//			kafkaService.createTopic0(topic, np, rf);
+//			
+//			objectNode.put("returnCode", "0000");
+//		} catch (Exception e) {
+//			String errMsg = ExceptionUtils.getMessage(e);
+//			String stackTrace = ExceptionUtils.getStackTrace(e);
+//			objectNode.put("returnCode", "-9999");
+//			objectNode.put("errMsg", errMsg);
+//			objectNode.put("returnCode", stackTrace);
+//			logger.error(">>> errMsg={}, stacktrace={}",errMsg,stackTrace);
+//		}
+//		
+//		logger.info(">>>>controller createTopic finished ");
+//		
+//		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
+//	}
 	@PostMapping(path="/deleteTopic/{topic}", produces=MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<Object> deleteTopic(@PathVariable("topic") String topic) {

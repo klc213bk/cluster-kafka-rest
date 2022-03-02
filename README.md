@@ -24,4 +24,5 @@ $ netstat -plten | grep java
 /data/v2/kafka/serverA
 /data/v2/kafka/serverB
 /data/v2/kafka/connectors
-/data/v2/kafka/connect
+/data/v2/kafka/health/connect
+/data/v2/kafka/health/logs
