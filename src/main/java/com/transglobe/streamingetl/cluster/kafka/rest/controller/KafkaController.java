@@ -203,18 +203,17 @@ public class KafkaController {
 		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
 	}
 	
-	@GetMapping(value="/lastLogminerScn")
+	@GetMapping(value="/lastLogminerScn/{topic}")
 	@ResponseBody
-	public ResponseEntity<LastLogminerScn> getEbaoKafkaLastLogminerScn(){
-		logger.info(">>>>getKafkaLastLogminerScn begin");
+	public ResponseEntity<LastLogminerScn> lastLogminerScn(@PathVariable("topic") String topic){
+		logger.info(">>>>lastLogminerScn begin");
 		long t0 = System.currentTimeMillis();
 		String errMsg = null;
 		String returnCode = "0000";
 		Optional<LastLogminerScn> logminerLastScn = null;
 		try {
-			logminerLastScn = kafkaService.getEbaoKafkaLastLogminerScn();
-			logger.info("    >>>>getKafkaLastLogminerScn finished.");
-
+			logminerLastScn = kafkaService.lastLogminerScn(topic);
+			
 			if (logminerLastScn.isPresent()) {
 				return new ResponseEntity<>(logminerLastScn.get(), HttpStatus.OK);
 			} else {
@@ -228,7 +227,7 @@ public class KafkaController {
 
 		long t1 = System.currentTimeMillis();
 
-		logger.info(">>>>getKafkaLastLogminerScn finished returnCode={}, span={}", returnCode, (t1 - t0));
+		logger.info(">>>>lastLogminerScn finished returnCode={}, span={}", returnCode, (t1 - t0));
 
 		return ResponseEntity.status(HttpStatus.OK).body(logminerLastScn.get());
 
