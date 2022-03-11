@@ -24,8 +24,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.transglobe.streamingetl.cluster.kafka.rest.bean.LastLogminerScn;
 import com.transglobe.streamingetl.cluster.kafka.rest.common.CreateTopic;
+import com.transglobe.streamingetl.cluster.kafka.rest.common.LastLogminerScn;
 import com.transglobe.streamingetl.cluster.kafka.rest.service.KafkaService;
 
 
@@ -203,7 +203,7 @@ public class KafkaController {
 		return new ResponseEntity<Object>(objectNode, HttpStatus.OK);
 	}
 	
-	@GetMapping(value="/lastLogminerScn/{topic}")
+	@GetMapping(value="/lastScn/topics/{topic}")
 	@ResponseBody
 	public ResponseEntity<LastLogminerScn> lastLogminerScn(@PathVariable("topic") String topic){
 		logger.info(">>>>lastLogminerScn begin");
@@ -232,5 +232,33 @@ public class KafkaController {
 		return ResponseEntity.status(HttpStatus.OK).body(logminerLastScn.get());
 
 	}
+	@GetMapping(value="/lastScn/connectors/{connector}")
+	@ResponseBody
+	public ResponseEntity<LastLogminerScn> lastLogminerScnByConnector(@PathVariable("connector") String connector){
+		logger.info(">>>>lastLogminerScn begin");
+		long t0 = System.currentTimeMillis();
+		String errMsg = null;
+		String returnCode = "0000";
+		Optional<LastLogminerScn> logminerLastScn = null;
+		try {
+			logminerLastScn = kafkaService.lastLogminerScnByConnector(connector);
+			
+			if (logminerLastScn.isPresent()) {
+				return new ResponseEntity<>(logminerLastScn.get(), HttpStatus.OK);
+			} else {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+			}
+		} catch (Exception e) {
+			returnCode = "-9999";
+			errMsg = ExceptionUtils.getMessage(e);
+			logger.error(">>>errMsg:{}, stacktrace={}", errMsg, ExceptionUtils.getStackTrace(e));
+		}
 
+		long t1 = System.currentTimeMillis();
+
+		logger.info(">>>>lastLogminerScn finished returnCode={}, span={}", returnCode, (t1 - t0));
+
+		return ResponseEntity.status(HttpStatus.OK).body(logminerLastScn.get());
+
+	}
 }

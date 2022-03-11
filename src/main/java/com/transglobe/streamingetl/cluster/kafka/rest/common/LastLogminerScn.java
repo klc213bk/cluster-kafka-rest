@@ -1,4 +1,4 @@
-package com.transglobe.streamingetl.cluster.kafka.rest.bean;
+package com.transglobe.streamingetl.cluster.kafka.rest.common;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -9,6 +9,9 @@ public class LastLogminerScn {
 	
 	@JsonProperty("partition")
 	private Integer partition;
+	
+	@JsonProperty("offset")
+	private Long offset;
 	
 	@JsonProperty("lastScn")
 	private Long lastScn;
@@ -24,9 +27,10 @@ public class LastLogminerScn {
 
 	public LastLogminerScn() { }
 	
-	public LastLogminerScn(String topic, Integer partition, Long lastScn, Long lastCommitScn, String rowId, Long timestamp) {
+	public LastLogminerScn(String topic, Integer partition, Long offset, Long lastScn, Long lastCommitScn, String rowId, Long timestamp) {
 		this.topic = topic;
 		this.partition = partition;
+		this.offset = offset;
 		this.lastScn = lastScn;
 		this.lastCommitScn = lastCommitScn;
 		this.rowId = rowId;
@@ -48,6 +52,14 @@ public class LastLogminerScn {
 
 	public void setPartition(Integer partition) {
 		this.partition = partition;
+	}
+
+	public Long getOffset() {
+		return offset;
+	}
+
+	public void setOffset(Long offset) {
+		this.offset = offset;
 	}
 
 	public Long getLastScn() {

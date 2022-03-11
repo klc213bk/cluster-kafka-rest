@@ -42,7 +42,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.transglobe.streamingetl.cluster.kafka.rest.common.CreateTopic;
-import com.transglobe.streamingetl.cluster.kafka.rest.bean.LastLogminerScn;
+import com.transglobe.streamingetl.cluster.kafka.rest.common.LastLogminerScn;
 
 @Service
 public class KafkaService {
@@ -313,19 +313,21 @@ public class KafkaService {
 
 		String selectedTopic = "";
 		Integer partition = null;
+		Long offset = null;
 		long lastScn = 0L;
 		long lastCommitScn = 0L;
 		String rowId = null;
 		Long timestamp =  null;
 		Map<TopicPartition, Long> offsetMap = consumer.endOffsets(tps);
 		for (TopicPartition tp : offsetMap.keySet()) {
-//		for (TopicPartition tp : tps) {
+			//		for (TopicPartition tp : tps) {
 			//			long position = consumer.position(tp);
-			long offset = offsetMap.get(tp);
+			offset = offsetMap.get(tp);
 
 			if (offset == 0) {
 				continue;
 			}
+
 			LOGGER.info("topic:{}, partition:{},offset:{}", tp.topic(), tp.partition(), offset);
 			consumer.seek(tp, offset- 1);
 
@@ -352,7 +354,7 @@ public class KafkaService {
 					String tableName = payload.get("TABLE_NAME").asText();
 					Long scn = Long.valueOf(payload.get("SCN").asText());
 					Long commitScn = Long.valueOf(payload.get("COMMIT_SCN").asText());
-					
+
 					LOGGER.info("operation:{},tableName:{},scn:{}, commitScn:{}, rowId:{},timestamp",operation,tableName,scn,commitScn,rowId,timestamp);
 
 					if (scn.longValue() > lastScn) {
@@ -373,7 +375,99 @@ public class KafkaService {
 		}
 		consumer.close();
 
-		lastLogminer = new LastLogminerScn(selectedTopic, partition, lastScn, lastCommitScn, rowId, timestamp);
+		lastLogminer = new LastLogminerScn(selectedTopic, partition, offset, lastScn, lastCommitScn, rowId, timestamp);
+		return Optional.of(lastLogminer);
+	}
+	public Optional<LastLogminerScn> lastLogminerScnByConnector(String connector) {
+		LOGGER.info(">>>>>kafkaBootstrapServer={}",kafkaBootstrapServer);
+		Consumer<String, String> consumer = createConsumer(kafkaBootstrapServer, "lastLogminerScn");
+
+		LastLogminerScn lastLogminer = null;
+		List<TopicPartition> tps = new ArrayList<>();
+		Map<String, List<PartitionInfo>> map = consumer.listTopics();
+		for (String t : map.keySet()) {	
+			//	if (topic.startsWith("EBAOPRD1")) {
+			for (PartitionInfo pi : map.get(t)) {
+				tps.add(new TopicPartition(pi.topic(), pi.partition()));
+				//				LOGGER.info(">>>>>topic={}, partition={}", pi.topic(), pi.partition());
+			}
+
+			//		}
+		}
+		consumer.assign( tps);
+
+		String selectedTopic = "";
+		Integer partition = null;
+		long scn = 0L;
+		long lastScn = 0L;
+		long commitScn = 0L;
+		long lastCommitScn = 0L;
+		Long offset = null;
+		String rowId = null;
+		Long timestamp =  null;
+		Map<TopicPartition, Long> offsetMap = consumer.endOffsets(tps);
+		for (TopicPartition tp : offsetMap.keySet()) {
+			//		for (TopicPartition tp : tps) {
+			//			long position = consumer.position(tp);
+			offset = offsetMap.get(tp);
+
+			if (offset == 0) {
+				continue;
+			} else if (StringUtils.equals("__consumer_offsets", tp.topic())){
+				continue;
+			}
+			
+
+			LOGGER.info(">>>>>topic:{}, partition:{},offset:{}", tp.topic(), tp.partition(), offset);
+			consumer.seek(tp, offset- 1);
+
+			ConsumerRecords<String, String> consumerRecords = consumer.poll(Duration.ofMillis(1000));
+			System.out.println(">>>>>record count:" + consumerRecords.count());
+
+			for (ConsumerRecord<String, String> record : consumerRecords) {
+				LOGGER.info(">>>>>record key:{}, value={}, topic:{}, partition:{},offset:{}, timestamp:{}",
+						record.key(), record.value(), record.topic(), record.partition(), record.offset(), record.timestamp());
+								
+				if (record.value() == null) {
+					continue;
+				}
+								
+				ObjectMapper objectMapper = new ObjectMapper();
+				objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+				try {
+					JsonNode jsonNode = objectMapper.readTree(record.value());
+					JsonNode payload = jsonNode.get("payload");
+					//	payloadStr = payload.toString();
+
+					String srcConnector = (payload.get("CONNECTOR") == null)? "" : payload.get("CONNECTOR").asText();
+
+					if (StringUtils.equals(srcConnector, connector)) {
+						scn = Long.valueOf(payload.get("SCN").asText());
+						
+						if (scn > lastScn) {
+							commitScn = Long.valueOf(payload.get("COMMIT_SCN").asText());
+							rowId = payload.get("ROW_ID").asText();
+							timestamp = Long.valueOf(payload.get("TIMESTAMP").asText());
+							selectedTopic = tp.topic();
+							partition = tp.partition();
+							
+							lastScn = scn;
+							lastCommitScn = commitScn;
+						}
+						LOGGER.info(">>>>>scn:{}, commitScn:{}, rowId:{},timestamp",scn,commitScn,rowId,timestamp);
+
+					}
+				} catch(Exception e) {
+					e.printStackTrace();
+					continue;
+				} 
+			}
+
+		}
+		consumer.close();
+
+		lastLogminer = new LastLogminerScn(selectedTopic, partition, offset, scn, commitScn, rowId, timestamp);
 		return Optional.of(lastLogminer);
 	}
 	private AdminClient createAdminClient() {
